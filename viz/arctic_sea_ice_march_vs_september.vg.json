@@ -1,0 +1,413 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v6.json",
+  "description": "Arctic sea-ice edge (March vs September) with year slider + animation. Baseline (2000) + recent (2024) shown for comparison.",
+  "width": 980,
+  "height": 580,
+  "padding": 20,
+  "config": { "background": "white" },
+
+  "signals": [
+    { "name": "baselineYear", "value": 2000 },
+    { "name": "recentYear", "value": 2024 },
+
+    {
+      "name": "play",
+      "value": false,
+      "bind": { "input": "checkbox", "name": "Animate years" }
+    },
+    {
+      "name": "tick",
+      "value": 0,
+      "on": [{ "events": { "type": "timer", "throttle": 700 }, "update": "now()" }]
+    },
+    {
+      "name": "yearSel",
+      "value": 2000,
+      "bind": { "input": "range", "min": 2000, "max": 2024, "step": 1, "name": "Year: " },
+      "on": [
+        {
+          "events": { "signal": "tick" },
+          "update": "play ? (yearSel >= 2024 ? 2000 : yearSel + 1) : yearSel"
+        }
+      ]
+    },
+
+    { "name": "legendW", "value": 210 },
+    { "name": "legendH", "value": 140 },
+    { "name": "legendX", "update": "width - legendW - (-100)" },
+    { "name": "legendY", "value": -20}
+  ],
+
+  "data": [
+    {
+      "name": "ice",
+      "url": "https://raw.githubusercontent.com/princebhanusteta/bspw-vega-sea-ice/main/data/processed/arctic_sea_ice_extent_2000_2024.geojson",
+      "format": { "type": "json", "property": "features" }
+    },
+
+    {
+      "name": "ice_mar_sel",
+      "source": "ice",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.properties.year == yearSel && datum.properties.month == 3"
+        }
+      ]
+    },
+    {
+      "name": "ice_sep_sel",
+      "source": "ice",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.properties.year == yearSel && datum.properties.month == 9"
+        }
+      ]
+    },
+
+    {
+      "name": "ice_mar_base",
+      "source": "ice",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.properties.year == baselineYear && datum.properties.month == 3"
+        }
+      ]
+    },
+    {
+      "name": "ice_sep_base",
+      "source": "ice",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.properties.year == baselineYear && datum.properties.month == 9"
+        }
+      ]
+    },
+
+    {
+      "name": "ice_mar_recent",
+      "source": "ice",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.properties.year == recentYear && datum.properties.month == 3"
+        }
+      ]
+    },
+    {
+      "name": "ice_sep_recent",
+      "source": "ice",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum.properties.year == recentYear && datum.properties.month == 9"
+        }
+      ]
+    },
+
+    {
+      "name": "land",
+      "url": "https://unpkg.com/world-atlas@2/land-110m.json",
+      "format": { "type": "topojson", "feature": "land" }
+    },
+    { "name": "graticule", "transform": [{ "type": "graticule" }] },
+    { "name": "sphere", "values": [{ "type": "Sphere" }] }
+  ],
+
+  "projections": [
+    {
+      "name": "projMar",
+      "type": "stereographic",
+      "rotate": [0, -90, 0],
+      "clipAngle": 50,
+      "scale": 430,
+      "translate": [280, 330]
+    },
+    {
+      "name": "projSep",
+      "type": "stereographic",
+      "rotate": [0, -90, 0],
+      "clipAngle": 50,
+      "scale": 430,
+      "translate": [720, 330]
+    }
+  ],
+
+  "marks": [
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "x": { "value": 20 },
+          "y": { "value": 14 },
+          "fontSize": { "value": 18 },
+          "fontWeight": { "value": "bold" },
+          "text": { "value": "Arctic sea-ice edge: March vs September (2000–2024)" }
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "x": { "value": 20 },
+          "y": { "value": 34 },
+          "fontSize": { "value": 12 },
+          "fill": { "value": "#555" },
+          "text": {
+            "signal": "'How to read: dashed = ' + baselineYear + ' baseline; thin light = ' + recentYear + '; blue = selected year. If blue sits inside dashed, ice extent decreased.'"
+          }
+        }
+      }
+    },
+
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "x": { "value": 280 },
+          "y": { "value": 72 },
+          "align": { "value": "center" },
+          "fontSize": { "value": 14 },
+          "fontWeight": { "value": "bold" },
+          "text": { "signal": "'March (winter maximum) — ' + yearSel" }
+        }
+      }
+    },
+
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "x": { "signal": "legendX - 12" },
+          "y": { "value": 72 },
+          "align": { "value": "right" },
+          "fontSize": { "value": 14 },
+          "fontWeight": { "value": "bold" },
+          "text": { "signal": "'September (summer minimum) — ' + yearSel" }
+        }
+      }
+    },
+
+    {
+      "type": "shape",
+      "from": { "data": "sphere" },
+      "encode": { "enter": { "fill": { "value": "#cfe8ff" } } },
+      "transform": [{ "type": "geoshape", "projection": "projMar" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "graticule" },
+      "encode": { "enter": { "stroke": { "value": "#dbe7f3" }, "strokeWidth": { "value": 0.6 } } },
+      "transform": [{ "type": "geoshape", "projection": "projMar" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "land" },
+      "encode": {
+        "enter": {
+          "fill": { "value": "#b9c3a1" },
+          "stroke": { "value": "#7f8a6f" },
+          "strokeWidth": { "value": 0.55 }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projMar" }]
+    },
+
+    {
+      "type": "shape",
+      "from": { "data": "ice_mar_recent" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#f8fafc" },
+          "strokeWidth": { "value": 2.0 }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projMar" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "ice_mar_base" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#6b7280" },
+          "strokeWidth": { "value": 1.5 },
+          "strokeDash": { "value": [5, 4] }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projMar" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "ice_mar_sel" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#1d4ed8" },
+          "strokeWidth": { "value": 3.2 }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projMar" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "ice_mar_sel" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#ffffff" },
+          "strokeWidth": { "value": 2.0 },
+          "tooltip": { "signal": "{'Panel':'March','Selected year': yearSel, 'Month': 'March'}" }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projMar" }]
+    },
+
+    {
+      "type": "shape",
+      "from": { "data": "sphere" },
+      "encode": { "enter": { "fill": { "value": "#cfe8ff" } } },
+      "transform": [{ "type": "geoshape", "projection": "projSep" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "graticule" },
+      "encode": { "enter": { "stroke": { "value": "#dbe7f3" }, "strokeWidth": { "value": 0.6 } } },
+      "transform": [{ "type": "geoshape", "projection": "projSep" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "land" },
+      "encode": {
+        "enter": {
+          "fill": { "value": "#b9c3a1" },
+          "stroke": { "value": "#7f8a6f" },
+          "strokeWidth": { "value": 0.55 }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projSep" }]
+    },
+
+    {
+      "type": "shape",
+      "from": { "data": "ice_sep_recent" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#f8fafc" },
+          "strokeWidth": { "value": 2.0 }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projSep" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "ice_sep_base" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#6b7280" },
+          "strokeWidth": { "value": 1.5 },
+          "strokeDash": { "value": [5, 4] }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projSep" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "ice_sep_sel" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#1d4ed8" },
+          "strokeWidth": { "value": 3.2 }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projSep" }]
+    },
+    {
+      "type": "shape",
+      "from": { "data": "ice_sep_sel" },
+      "encode": {
+        "update": {
+          "fillOpacity": { "value": 0 },
+          "stroke": { "value": "#ffffff" },
+          "strokeWidth": { "value": 2.0 },
+          "tooltip": { "signal": "{'Panel':'September','Selected year': yearSel, 'Month': 'September'}" }
+        }
+      },
+      "transform": [{ "type": "geoshape", "projection": "projSep" }]
+    },
+
+    {
+      "type": "group",
+      "encode": { "enter": { "x": { "signal": "legendX" }, "y": { "signal": "legendY" } } },
+      "marks": [
+        {
+          "type": "rect",
+          "encode": {
+            "enter": {
+              "x": { "value": 0 },
+              "y": { "value": 0 },
+              "width": { "signal": "legendW" },
+              "height": { "signal": "legendH" },
+              "fill": { "value": "#ffffff" },
+              "stroke": { "value": "#c9c9c9" },
+              "strokeWidth": { "value": 1 },
+              "cornerRadius": { "value": 8 }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "encode": {
+            "enter": {
+              "x": { "value": 14 },
+              "y": { "value": 22 },
+              "fontSize": { "value": 12 },
+              "fontWeight": { "value": "bold" },
+              "fill": { "value": "#111" },
+              "text": { "value": "Legend" }
+            }
+          }
+        },
+
+        { "type": "rect", "encode": { "enter": { "x": { "value": 14 }, "y": { "value": 34 }, "width": { "value": 18 }, "height": { "value": 12 }, "fill": { "value": "#cfe8ff" }, "stroke": { "value": "#bcdcff" } } } },
+        { "type": "text", "encode": { "enter": { "x": { "value": 40 }, "y": { "value": 44 }, "fontSize": { "value": 11 }, "fill": { "value": "#444" }, "text": { "value": "Ocean (context)" } } } },
+
+        { "type": "rect", "encode": { "enter": { "x": { "value": 14 }, "y": { "value": 56 }, "width": { "value": 18 }, "height": { "value": 12 }, "fill": { "value": "#b9c3a1" }, "stroke": { "value": "#7f8a6f" } } } },
+        { "type": "text", "encode": { "enter": { "x": { "value": 40 }, "y": { "value": 66 }, "fontSize": { "value": 11 }, "fill": { "value": "#444" }, "text": { "value": "Land (context)" } } } },
+
+        { "type": "rule", "encode": { "enter": { "x": { "value": 14 }, "x2": { "value": 54 }, "y": { "value": 86 }, "stroke": { "value": "#6b7280" }, "strokeWidth": { "value": 2 }, "strokeDash": { "value": [5, 4] } } } },
+        { "type": "text", "encode": { "enter": { "x": { "value": 62 }, "y": { "value": 90 }, "fontSize": { "value": 11 }, "fill": { "value": "#444" }, "text": { "signal": "'Baseline edge (' + baselineYear + ')'" } } } },
+
+        { "type": "rule", "encode": { "enter": { "x": { "value": 14 }, "x2": { "value": 54 }, "y": { "value": 108 }, "stroke": { "value": "#f8fafc" }, "strokeWidth": { "value": 2 } } } },
+        { "type": "text", "encode": { "enter": { "x": { "value": 62 }, "y": { "value": 112 }, "fontSize": { "value": 11 }, "fill": { "value": "#444" }, "text": { "signal": "'Recent edge (' + recentYear + ')'" } } } },
+
+        { "type": "rule", "encode": { "enter": { "x": { "value": 14 }, "x2": { "value": 54 }, "y": { "value": 130 }, "stroke": { "value": "#1d4ed8" }, "strokeWidth": { "value": 3 } } } },
+        { "type": "rule", "encode": { "enter": { "x": { "value": 14 }, "x2": { "value": 54 }, "y": { "value": 130 }, "stroke": { "value": "#ffffff" }, "strokeWidth": { "value": 2 } } } },
+        { "type": "text", "encode": { "enter": { "x": { "value": 62 }, "y": { "value": 134 }, "fontSize": { "value": 11 }, "fill": { "value": "#444" }, "text": { "value": "Selected year edge" } } } }
+      ]
+    },
+
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "x": { "value": 20 },
+          "y": { "value": 555 },
+          "fontSize": { "value": 11 },
+          "fill": { "value": "#555" },
+          "text": {
+            "value": "Data: NSIDC Sea Ice Index extent outlines (processed to GeoJSON). Basemap: world-atlas land. Projection: polar stereographic north."
+          }
+        }
+      }
+    }
+  ]
+}
