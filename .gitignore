@@ -1,0 +1,9 @@
+# raw downloads (don’t commit)
+data/raw/
+*.zip
+
+# intermediate files
+data/processed/geojson_tmp/
+
+# mac + misc
+.DS_Store
