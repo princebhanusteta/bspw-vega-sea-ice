@@ -55,7 +55,7 @@ A filled extent would require polygon geometry (or raster concentration grids), 
 ## Iteration 3 — Final design polish + stronger narrative cues (final)
 
 **Visual:**
-![alt text](visualization_itr_3.png)
+![alt text](FInal.png)
 
 **What I refined**
 - I kept the successful structure from Iteration 2 (two panels, same projection, same baseline logic).

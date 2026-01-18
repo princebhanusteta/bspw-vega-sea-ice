@@ -6,7 +6,7 @@ This document describes the datasets used for the Vega visualization (March vs S
 
 - **Final Vega spec (interactive):** [`viz/arctic_sea_ice_march_vs_september.vg.json`](viz/arctic_sea_ice_march_vs_september.vg.json)
 - **Visualization iteration log:** [`viz/log-visualization.md`](viz/log-visualization.md)
-- **Final render screenshot:** [`viz/visualization_itr_3.png`](viz/visualization_itr_3.png)
+- **Final render screenshot:** [`viz/visualization_itr_3.png`](viz/Final.png)
 - **Processed dataset used by Vega:** [`data/processed/arctic_sea_ice_extent_2000_2024.geojson`](data/processed/arctic_sea_ice_extent_2000_2024.geojson)
 - **Build script (raw → processed):** [`scripts/03_build_geojson.py`](scripts/03_build_geojson.py)
 
